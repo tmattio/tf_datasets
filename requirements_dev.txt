@@ -1,0 +1,9 @@
+pip
+bumpversion
+wheel
+flake8
+ipython
+jupyter
+
+pytest
+pytest-runner

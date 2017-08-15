@@ -11,6 +11,8 @@ with open('README.md') as readme_file:
 requirements = [
     'tensorflow',
     'numpy',
+    'scipy',
+    'requests',
     'tqdm',
 ]
 

@@ -89,12 +89,12 @@ def extract_tgz(filepath, output_dir):
     import tarfile
 
     tar = tarfile.open(filepath, 'r:*')
-        for f in tar:
-            output_file = os.path.join(output_dir, f.name)
-            try:
-                tar.extract(f, output_dir)
-            except IOError as e:
-                os.remove(output_file)
-                tar.extract(f, output_dir)
-            finally:
-                os.chmod(output_file, f.mode)
+    for f in tar:
+        output_file = os.path.join(output_dir, f.name)
+        try:
+            tar.extract(f, output_dir)
+        except IOError as e:
+            os.remove(output_file)
+            tar.extract(f, output_dir)
+        finally:
+            os.chmod(output_file, f.mode)

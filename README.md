@@ -41,7 +41,8 @@ To use a dataset:
 
 * **mnist** - [MNIST](http://yann.lecun.com/exdb/mnist/): The MNIST database of handwritten digits
 * **flowers** - [Flowers](https://github.com/tensorflow/models/blob/master/slim/datasets/flowers.py): The Tensorflow flowers dataset.
-* **ciraf10** - [Ciraf-10](https://www.cs.toronto.edu/~kriz/cifar.html): The CIFAR-10 is a labeled subset of the 80 million tiny images dataset.
+* **cifar10** - [Cifar-10](https://www.cs.toronto.edu/~kriz/cifar.html): The CIFAR-10 is a labeled subset of the 80 million tiny images dataset.
+* **cifar100** - [Cifar-100](https://www.cs.toronto.edu/~kriz/cifar.html): The CIFAR-100 is a labeled subset of the 80 million tiny images dataset.
 
 ### Object Detection
 
@@ -53,7 +54,6 @@ To use a dataset:
 * Add unit tests
 * Add loads method for the datasets
 * Create API to download already created dataset
-* Support Ciraf-100 dataset
 * Support MSCoco dataset
 * Support Pascal VOC 2007/2012 dataset
 * Support CBSR-Webface dataset

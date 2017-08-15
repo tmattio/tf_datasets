@@ -19,7 +19,7 @@ from tf_datasets.core.dataset_utils import create_image_example, create_dataset_
 slim = tf.contrib.slim
 
 
-def _get_data_points_from_ciraf_file(filepath):
+def _get_data_points_from_cifar_file(filepath):
     with open(filepath, 'rb') as f:
         if sys.version_info < (3,):
             data = cPickle.load(f)
@@ -36,7 +36,7 @@ def _get_data_points_from_ciraf_file(filepath):
     return [(images[i], labels[i]) for i in range(num_images)]
 
 
-class ciraf10(BaseDataset):
+class cifar10(BaseDataset):
     image_size = 32
     image_channel = 3
     num_train_files = 5
@@ -56,7 +56,7 @@ class ciraf10(BaseDataset):
 
     def __init__(self, dataset_dir):
         super().__init__(dataset_dir, self.class_names, zero_based_labels=True)
-        self.dataset_name = 'ciraf10'
+        self.dataset_name = 'cifar10'
         self.download_dir = os.path.join(self.dataset_dir, 'download')
         self._coder = ImageCoder()
 
@@ -81,12 +81,12 @@ class ciraf10(BaseDataset):
             filename = os.path.join(self.download_dir,
                                     'cifar-10-batches-py',
                                     'data_batch_%d' % (i + 1))
-            train_datapoints += _get_data_points_from_ciraf_file(filename)
+            train_datapoints += _get_data_points_from_cifar_file(filename)
 
         test_filename = os.path.join(self.download_dir,
                                      'cifar-10-batches-py',
                                      'test_batch')
-        val_datapoints = _get_data_points_from_ciraf_file(test_filename)
+        val_datapoints = _get_data_points_from_cifar_file(test_filename)
 
         return np.stack(train_datapoints), val_datapoints
 
@@ -95,7 +95,7 @@ class ciraf10(BaseDataset):
         split_names = ['train', 'validation']
 
         for split, split_name in zip(splits, split_names):
-            create_dataset_split('ciraf10',
+            create_dataset_split('cifar10',
                                  self.dataset_dir,
                                  split_name,
                                  split,

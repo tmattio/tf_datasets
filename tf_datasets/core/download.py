@@ -88,8 +88,7 @@ def extract_zip(filepath, output_dir):
 def extract_tgz(filepath, output_dir):
     import tarfile
 
-    def extract(mode):
-        tar = tarfile.open(filepath, mode)
+    tar = tarfile.open(filepath, 'r:*')
         for f in tar:
             output_file = os.path.join(output_dir, f.name)
             try:
@@ -99,12 +98,3 @@ def extract_tgz(filepath, output_dir):
                 tar.extract(f, output_dir)
             finally:
                 os.chmod(output_file, f.mode)
-
-    if filepath[-4:] == '.tgz':
-        mode = 'r:gz'
-    elif filepath[-7:] == '.tar.gz':
-        mode = 'r|gz'
-    else:
-        raise ValueError('File format not supported.')
-
-    extract(mode)

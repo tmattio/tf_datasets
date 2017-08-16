@@ -11,7 +11,9 @@ import tensorflow as tf
 from tf_datasets.core.download import download_google_drive, extract_zip
 from tf_datasets.core.base_dataset import BaseDataset
 from tf_datasets.core import dataset_utils
-from tf_datasets.core.dataset_utils import create_dataset_split, split_dataset, ImageCoder
+from tf_datasets.core.dataset_utils import create_dataset_split
+from tf_datasets.core.dataset_utils import split_dataset
+from tf_datasets.core.dataset_utils import ImageCoder
 
 
 slim = tf.contrib.slim
@@ -27,32 +29,42 @@ class wider_face(BaseDataset):
     validation_data_size = 362752168
     test_data_size = 1844140520
 
-    annotation_data_url = 'http://mmlab.ie.cuhk.edu.hk/projects/WIDERFace/support/bbx_annotation/wider_face_split.zip'
+    annotation_data_url = 'http://mmlab.ie.cuhk.edu.hk/projects/WIDERFace/'
+    'support/bbx_annotation/wider_face_split.zip'
 
     def __init__(self, dataset_dir):
-        super().__init__(dataset_dir, class_names=self._get_class_names(), zero_based_labels=False)
+        super().__init__(
+            dataset_dir,
+            class_names=self._get_class_names(),
+            zero_based_labels=False
+        )
         self.dataset_name = 'wider_face'
         self.download_dir = os.path.join(self.dataset_dir, 'download')
         self._coder = ImageCoder()
 
     def download(self):
-
-        for file_id, filename, file_size in [(self.train_data_id, 'WIDER_train.zip', self.train_data_size),
-                                             (self.validation_data_id, 'WIDER_val.zip', self.validation_data_size),
-                                             (self.test_data_id, 'WIDER_test.zip', self.test_data_size)]:
+        for file_id, filename, file_size in [
+            (self.train_data_id, 'WIDER_train.zip', self.train_data_size),
+            (self.validation_data_id, 'WIDER_val.zip',
+             self.validation_data_size),
+            (self.test_data_id, 'WIDER_test.zip', self.test_data_size)
+        ]:
             output_path = os.path.join(self.download_dir, filename)
             if not os.path.exists(output_path):
-                download_google_drive(file_id, output_path, self.base_url, file_id)
+                download_google_drive(
+                    file_id, output_path, self.base_url, file_id)
 
     def extract(self):
         for filename in ['WIDER_train.zip',
                          'WIDER_val.zip',
                          'wider_face_split.zip']:
-            extract_zip(os.path.join(self.download_dir, filename), self.download_dir)
+            extract_zip(os.path.join(self.download_dir,
+                                     filename), self.download_dir)
 
     def convert(self):
         data_points = list(self._get_data_points())
-        splits = split_dataset(data_points, split_factor=[0.8, 0.2], shuffle=True)
+        splits = split_dataset(data_points, split_factor=[
+                               0.8, 0.2], shuffle=True)
         split_names = ['train', 'validation']
 
         for split, split_name in zip(splits, split_names):
@@ -75,12 +87,18 @@ class wider_face(BaseDataset):
                 yield filename
 
     def _get_data_points(self):
-        train = glob.glob(os.path.join(self.download_dir, 'WIDER_train', '**.png'), recursive=True)
-        eval = glob.glob(os.path.join(self.download_dir, 'WIDER_eval', '**.png'), recursive=True)
+        train = glob.glob(
+            os.path.join(self.download_dir, 'WIDER_train', '**.png'),
+            recursive=True
+        )
+        eval = glob.glob(os.path.join(self.download_dir,
+                                      'WIDER_eval', '**.png'), recursive=True)
 
         filenames_to_bboxes = {}
-        filenames_to_bboxes.update(self._load_label_file(os.path.join(self.download_dir, 'wider_face_split', 'wider_face_train.mat')))
-        filenames_to_bboxes.update(self._load_label_file(os.path.join(self.download_dir, 'wider_face_split', 'wider_face_val.mat')))
+        filenames_to_bboxes.update(self._load_label_file(os.path.join(
+            self.download_dir, 'wider_face_split', 'wider_face_train.mat')))
+        filenames_to_bboxes.update(self._load_label_file(os.path.join(
+            self.download_dir, 'wider_face_split', 'wider_face_val.mat')))
 
         train_split = [(f, filenames_to_bboxes[f]) for f in train]
         eval_split = [(f, filenames_to_bboxes[f]) for f in eval]
@@ -130,17 +148,22 @@ class wider_face(BaseDataset):
             'image/height': dataset_utils.int64_feature(height),
             'image/width': dataset_utils.int64_feature(width),
             'image/channels': dataset_utils.int64_feature(channels),
-            'image/filename': dataset_utils.bytes_feature(
-                filename.encode('utf8')),
-            'image/key/sha256': dataset_utils.bytes_feature(key.encode('utf8')),
-            'image/encoded': dataset_utils.bytes_feature(encoded_image.tobytes()),
-            'image/format': dataset_utils.bytes_feature(image_format.encode('utf8')),
+            'image/filename':
+                dataset_utils.bytes_feature(filename.encode('utf8')),
+            'image/key/sha256':
+                dataset_utils.bytes_feature(key.encode('utf8')),
+            'image/encoded':
+                dataset_utils.bytes_feature(encoded_image.tobytes()),
+            'image/format':
+                dataset_utils.bytes_feature(image_format.encode('utf8')),
             'image/object/bbox/xmin': dataset_utils.float_list_feature(xmin),
             'image/object/bbox/xmax': dataset_utils.float_list_feature(xmax),
             'image/object/bbox/ymin': dataset_utils.float_list_feature(ymin),
             'image/object/bbox/ymax': dataset_utils.float_list_feature(ymax),
-            'image/object/class/text': dataset_utils.bytes_list_feature(classes_text),
-            'image/object/class/label': dataset_utils.int64_list_feature(classes),
+            'image/object/class/text':
+                dataset_utils.bytes_list_feature(classes_text),
+            'image/object/class/label':
+                dataset_utils.int64_list_feature(classes),
         }))
 
     def load(self, split_name, reader=None):

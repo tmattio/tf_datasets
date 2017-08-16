@@ -11,7 +11,9 @@ import numpy as np
 import tensorflow as tf
 from tf_datasets.core.download import download_http, extract_gzip
 from tf_datasets.core.base_dataset import BaseDataset
-from tf_datasets.core.dataset_utils import create_image_example, create_dataset_split, ImageCoder
+from tf_datasets.core.dataset_utils import create_image_example
+from tf_datasets.core.dataset_utils import create_dataset_split
+from tf_datasets.core.dataset_utils import ImageCoder
 
 
 slim = tf.contrib.slim
@@ -61,7 +63,8 @@ class mnist(BaseDataset):
         for filename in self.filenames:
             output_path = os.path.join(self.download_dir, filename[:-3])
             if not os.path.exists(output_path):
-                extract_gzip(os.path.join(self.download_dir, filename), self.download_dir)
+                extract_gzip(os.path.join(self.download_dir,
+                                          filename), self.download_dir)
 
     def convert(self):
         splits = self._get_data_points()
@@ -80,7 +83,8 @@ class mnist(BaseDataset):
         shutil.rmtree(self.download_dir)
 
     def _get_data_points(self):
-        def _get_data_points_from_mnist_files(image_file, label_file, num_data_points):
+        def _get_data_points_from_mnist_files(image_file, label_file,
+                                              num_data_points):
             with open(os.path.join(self.download_dir, label_file), 'rb') as f:
                 f.read(8)
                 buf = f.read(1 * num_data_points)
@@ -88,9 +92,15 @@ class mnist(BaseDataset):
 
             with open(os.path.join(self.download_dir, image_file), 'rb') as f:
                 f.read(16)
-                buf = f.read(self.image_size * self.image_size * num_data_points * self.image_channel)
+                buf = f.read(self.image_size * self.image_size *
+                             num_data_points * self.image_channel)
                 images = np.frombuffer(buf, dtype=np.uint8)
-                images = images.reshape(num_data_points, self.image_size, self.image_size, self.image_channel)
+                images = images.reshape(
+                    num_data_points,
+                    self.image_size,
+                    self.image_size,
+                    self.image_channel
+                )
 
             assert labels.shape[0] == images.shape[0]
 
@@ -116,7 +126,11 @@ class mnist(BaseDataset):
         label, image = data_point
         encoded = self._coder.encode_png(image)
         image_format = 'png'
-        height, width, channels = self.image_size, self.image_size, self.image_channel
+        height, width, channels = (
+            self.image_size,
+            self.image_size,
+            self.image_channel
+        )
         class_name = self.labels_to_class_names[label]
         key = hashlib.sha256(encoded).hexdigest()
 

@@ -13,7 +13,9 @@ import numpy as np
 import tensorflow as tf
 from tf_datasets.core.download import download_http, extract_tgz
 from tf_datasets.core.base_dataset import BaseDataset
-from tf_datasets.core.dataset_utils import create_image_example, create_dataset_split, ImageCoder
+from tf_datasets.core.dataset_utils import create_image_example
+from tf_datasets.core.dataset_utils import create_dataset_split
+from tf_datasets.core.dataset_utils import ImageCoder
 
 
 slim = tf.contrib.slim
@@ -73,7 +75,10 @@ class cifar10(BaseDataset):
     def extract(self):
         output_path = os.path.join(self.download_dir, 'cifar-10-batches-py')
         if not os.path.exists(output_path):
-            extract_tgz(os.path.join(self.download_dir, 'cifar-10-python.tar.gz'), self.download_dir)
+            extract_tgz(
+                os.path.join(self.download_dir, 'cifar-10-python.tar.gz'),
+                self.download_dir
+            )
 
     def _get_data_points(self):
         train_datapoints = []
@@ -110,7 +115,11 @@ class cifar10(BaseDataset):
         image, label = data_point
         encoded = self._coder.encode_png(image)
         image_format = 'png'
-        height, width, channels = self.image_size, self.image_size, self.image_channel
+        height, width, channels = (
+            self.image_size,
+            self.image_size,
+            self.image_channel
+        )
         class_name = self.labels_to_class_names[label]
         key = hashlib.sha256(encoded).hexdigest()
 

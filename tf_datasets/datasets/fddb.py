@@ -11,7 +11,9 @@ import tensorflow as tf
 from tf_datasets.core.download import download_http, extract_tgz
 from tf_datasets.core.base_dataset import BaseDataset
 from tf_datasets.core import dataset_utils
-from tf_datasets.core.dataset_utils import create_dataset_split, split_dataset, ImageCoder
+from tf_datasets.core.dataset_utils import create_dataset_split
+from tf_datasets.core.dataset_utils import split_dataset
+from tf_datasets.core.dataset_utils import ImageCoder
 
 
 slim = tf.contrib.slim
@@ -29,7 +31,8 @@ def _load_fddb_label_file(label_file):
             filename = l.strip() + '.jpg'
 
             ellipse_count = int(f.readline().strip())
-            faces = [f.readline().strip().split() for ellipse in range(ellipse_count)]
+            faces = [f.readline().strip().split()
+                     for ellipse in range(ellipse_count)]
 
             filenames_to_coords[filename] = faces
     return filenames_to_coords
@@ -63,7 +66,8 @@ class fddb(BaseDataset):
     ]
 
     def __init__(self, dataset_dir):
-        super().__init__(dataset_dir, class_names=['face', ], zero_based_labels=False)
+        super().__init__(dataset_dir, class_names=[
+            'face', ], zero_based_labels=False)
         self.dataset_name = 'fddb'
         self.download_dir = os.path.join(self.dataset_dir, 'download')
         self._coder = ImageCoder()
@@ -80,12 +84,15 @@ class fddb(BaseDataset):
                 download_http(url, output_path)
 
     def extract(self):
-        extract_tgz(os.path.join(self.download_dir, 'FDDB-folds.tgz'), self.download_dir)
-        extract_tgz(os.path.join(self.download_dir, 'originalPics.tar.gz'), self.download_dir)
+        extract_tgz(os.path.join(self.download_dir,
+                                 'FDDB-folds.tgz'), self.download_dir)
+        extract_tgz(os.path.join(self.download_dir,
+                                 'originalPics.tar.gz'), self.download_dir)
 
     def convert(self):
         data_points = list(self._get_data_points())
-        splits = split_dataset(data_points, split_factor=[0.8, 0.2], shuffle=True)
+        splits = split_dataset(data_points, split_factor=[
+                               0.8, 0.2], shuffle=True)
         split_names = ['train', 'validation']
 
         for split, split_name in zip(splits, split_names):
@@ -102,7 +109,9 @@ class fddb(BaseDataset):
 
     def _get_data_points(self):
         filenames_to_coords = {}
-        for f in glob.glob(os.path.join(self.download_dir, 'FDDB-folds', '*-ellipseList.txt')):
+        for f in glob.glob(os.path.join(self.download_dir,
+                                        'FDDB-folds',
+                                        '*-ellipseList.txt')):
             filenames_to_coords.update(_load_fddb_label_file(f))
 
         return filenames_to_coords.items()
@@ -138,15 +147,19 @@ class fddb(BaseDataset):
             'image/channels': dataset_utils.int64_feature(channels),
             'image/filename': dataset_utils.bytes_feature(
                 filename.encode('utf8')),
-            'image/key/sha256': dataset_utils.bytes_feature(key.encode('utf8')),
+            'image/key/sha256':
+                dataset_utils.bytes_feature(key.encode('utf8')),
             'image/encoded': dataset_utils.bytes_feature(encoded_image),
-            'image/format': dataset_utils.bytes_feature(image_format.encode('utf8')),
+            'image/format':
+                dataset_utils.bytes_feature(image_format.encode('utf8')),
             'image/object/bbox/xmin': dataset_utils.float_list_feature(xmin),
             'image/object/bbox/xmax': dataset_utils.float_list_feature(xmax),
             'image/object/bbox/ymin': dataset_utils.float_list_feature(ymin),
             'image/object/bbox/ymax': dataset_utils.float_list_feature(ymax),
-            'image/object/class/text': dataset_utils.bytes_list_feature(classes_text),
-            'image/object/class/label': dataset_utils.int64_list_feature(classes),
+            'image/object/class/text':
+                dataset_utils.bytes_list_feature(classes_text),
+            'image/object/class/label':
+                dataset_utils.int64_list_feature(classes),
         }))
 
     def load(self, split_name, reader=None):

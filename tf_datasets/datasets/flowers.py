@@ -10,7 +10,10 @@ import tensorflow as tf
 
 from tf_datasets.core.base_dataset import BaseDataset
 from tf_datasets.core.download import download_http, extract_tgz
-from tf_datasets.core.dataset_utils import split_dataset, create_dataset_split, ImageCoder, create_image_example
+from tf_datasets.core.dataset_utils import split_dataset
+from tf_datasets.core.dataset_utils import create_dataset_split
+from tf_datasets.core.dataset_utils import ImageCoder
+from tf_datasets.core.dataset_utils import create_image_example
 
 
 slim = tf.contrib.slim
@@ -23,7 +26,9 @@ class flowers(BaseDataset):
     filename = 'http://download.tensorflow.org/example_images/flower_photos.tgz'
 
     def __init__(self, dataset_dir):
-        super().__init__(dataset_dir, self._get_class_names(), zero_based_labels=True)
+        super().__init__(dataset_dir,
+                         self._get_class_names(),
+                         zero_based_labels=True)
         self.dataset_name = 'flowers'
         self.download_dir = os.path.join(self.dataset_dir, 'download')
         self._coder = ImageCoder()
@@ -41,11 +46,13 @@ class flowers(BaseDataset):
     def extract(self):
         output_path = os.path.join(self.download_dir, 'flower_photos')
         if not os.path.exists(output_path):
-            extract_tgz(os.path.join(self.download_dir, 'flower_photos.tgz'), self.download_dir)
+            extract_tgz(os.path.join(self.download_dir,
+                                     'flower_photos.tgz'), self.download_dir)
 
     def convert(self):
         data_points = list(self._get_data_points())
-        splits = split_dataset(data_points, split_factor=[0.9, 0.1], shuffle=True)
+        splits = split_dataset(data_points, split_factor=[
+                               0.9, 0.1], shuffle=True)
         split_names = ['train', 'validation']
 
         for split, split_name in zip(splits, split_names):

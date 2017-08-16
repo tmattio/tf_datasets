@@ -11,6 +11,7 @@ from tf_datasets.datasets.cifar100 import cifar100
 from tf_datasets.datasets.fddb import fddb
 from tf_datasets.datasets.flowers import flowers
 from tf_datasets.datasets.mnist import mnist
+from tf_datasets.datasets.svhn import svhn
 from tf_datasets.datasets.wider_face import wider_face
 
 _dataset_name_map = {
@@ -20,6 +21,7 @@ _dataset_name_map = {
     'fddb': fddb,
     'flowers': flowers,
     'mnist': mnist,
+    'svhn': svhn,
     'wider_face': wider_face,
 }
 

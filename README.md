@@ -48,6 +48,7 @@ To use a dataset:
 
 * **fddb** - [FDDB](http://vis-www.cs.umass.edu/fddb/): Face Detection Data Set and Benchmark
 * **wider_face** - [WIDER Face](http://mmlab.ie.cuhk.edu.hk/projects/WIDERFace/): WIDER FACE: A Face Detection Benchmark
+* **svhn** - [SVHN](http://ufldl.stanford.edu/housenumbers/):The Street View House Numbers (SVHN) Dataset
 
 ## TODO
 

@@ -39,7 +39,8 @@ tf.app.flags.DEFINE_bool(
 
 def main(_):
     if not FLAGS.dataset_name:
-        raise ValueError('You must supply the dataset name with --dataset_name')
+        raise ValueError(
+            'You must supply the dataset name with --dataset_name')
 
     if not FLAGS.dataset_dir:
         raise ValueError('You must supply the dataset name with --dataset_dir')

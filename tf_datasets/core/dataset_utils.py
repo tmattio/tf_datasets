@@ -209,15 +209,18 @@ def _process_data_points_batch(dataset_name,
 
     counter = 0
     for s in range(num_shards_per_batch):
-        # Generate a sharded version of the file name, e.g. 'train-00002-of-00010'
+        # Generate a sharded version of the file name, e.g.
+        # 'train-00002-of-00010'
         shard = thread_index * num_shards_per_batch + s
 
-        output_filepath = get_dataset_filepath(dataset_name, split_name, shard, num_shards)
+        output_filepath = get_dataset_filepath(
+            dataset_name, split_name, shard, num_shards)
         output_filepath = os.path.join(dataset_dir, output_filepath)
         writer = tf.python_io.TFRecordWriter(output_filepath)
 
         shard_counter = 0
-        files_in_shard = np.arange(shard_ranges[s], shard_ranges[s + 1], dtype=int)
+        files_in_shard = np.arange(
+            shard_ranges[s], shard_ranges[s + 1], dtype=int)
         for i in files_in_shard:
             data_point = data_points[i]
 

@@ -23,6 +23,39 @@ class _TqdmUpTo(tqdm):
         self.update(b * bsize - self.n)  # will also set self.n = b * bsize
 
 
+def download_ftp(host, filename, output_file, username=None, password=None,
+                 port=21):
+    from contextlib import closing
+    from ftplib import FTP
+
+    with closing(FTP()) as ftp:
+        ftp.connect(host=host, port=port)
+        ftp.login(user=username, passwd=password)
+        ftp.set_pasv(True)
+
+        # Get the size of the file
+        ftp.sendcmd('TYPE i')
+        total_size = ftp.size(filename)
+
+        with open(output_file, 'wb') as f:
+            with _TqdmUpTo(unit='B', unit_scale=True, unit_divisor=1024,
+                           miniters=1, desc=filename, total=total_size) as t:
+
+                def _progress(block):
+                    _progress.count += 1
+                    f.write(block)
+                    t.update_to(b=_progress.count,
+                                bsize=1024, tsize=total_size)
+                _progress.count = 0
+
+                res = ftp.retrbinary('RETR %s' % filename,
+                                     callback=_progress, blocksize=1024)
+
+            if not res.startswith('226 Transfer complete'):
+                print('\nDownload of %s did not complete.' % filename)
+                os.remove(output_file)
+
+
 def download_http(url, output_file, username=None, password=None):
     from urllib import request
     filename = url.replace('/', ' ').split()[-1]

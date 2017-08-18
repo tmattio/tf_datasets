@@ -13,7 +13,9 @@ import numpy as np
 import tensorflow as tf
 from tf_datasets.core.download import download_http, extract_tgz
 from tf_datasets.core.base_dataset import BaseDataset
-from tf_datasets.core.dataset_utils import create_image_example, create_dataset_split, ImageCoder
+from tf_datasets.core.dataset_utils import create_image_example
+from tf_datasets.core.dataset_utils import create_dataset_split
+from tf_datasets.core.dataset_utils import ImageCoder
 
 
 slim = tf.contrib.slim
@@ -31,7 +33,7 @@ def _get_data_points_from_cifar_file(filepath):
 
     images = images.reshape((num_images, 3, 32, 32))
     images = [np.squeeze(image).transpose((1, 2, 0)) for image in images]
-    labels = data[b'labels']
+    labels = data[b'fine_labels']
 
     return [(images[i], labels[i]) for i in range(num_images)]
 
@@ -39,7 +41,6 @@ def _get_data_points_from_cifar_file(filepath):
 class cifar100(BaseDataset):
     image_size = 32
     image_channel = 3
-    num_train_files = 5
     class_names = ['apples',
                    'aquarium_fish',
                    'baby',
@@ -154,29 +155,31 @@ class cifar100(BaseDataset):
         except FileExistsError:
             pass
 
-        output_path = os.path.join(self.download_dir, 'cifar-100-python.tar.gz')
+        output_path = os.path.join(
+            self.download_dir, 'cifar-100-python.tar.gz')
         if not os.path.exists(output_path):
             download_http(self.public_url, output_path)
 
     def extract(self):
-        output_path = os.path.join(self.download_dir, 'cifar-100-batches-py')
+        output_path = os.path.join(self.download_dir, 'cifar-100-python')
         if not os.path.exists(output_path):
-            extract_tgz(os.path.join(self.download_dir, 'cifar-100-python.tar.gz'), self.download_dir)
+            extract_tgz(
+                os.path.join(self.download_dir, 'cifar-100-python.tar.gz'),
+                self.download_dir
+            )
 
     def _get_data_points(self):
-        train_datapoints = []
-        for i in range(self.num_train_files):
-            filename = os.path.join(self.download_dir,
-                                    'cifar-100-batches-py',
-                                    'data_batch_%d' % (i + 1))
-            train_datapoints += _get_data_points_from_cifar_file(filename)
+        train_filename = os.path.join(self.download_dir,
+                                      'cifar-100-python',
+                                      'train')
+        train_datapoints = _get_data_points_from_cifar_file(train_filename)
 
         test_filename = os.path.join(self.download_dir,
-                                     'cifar-100-batches-py',
-                                     'test_batch')
+                                     'cifar-100-python',
+                                     'test')
         val_datapoints = _get_data_points_from_cifar_file(test_filename)
 
-        return np.stack(train_datapoints), val_datapoints
+        return train_datapoints, val_datapoints
 
     def convert(self):
         splits = self._get_data_points()
@@ -198,7 +201,11 @@ class cifar100(BaseDataset):
         image, label = data_point
         encoded = self._coder.encode_png(image)
         image_format = 'png'
-        height, width, channels = self.image_size, self.image_size, self.image_channel
+        height, width, channels = (
+            self.image_size,
+            self.image_size,
+            self.image_channel
+        )
         class_name = self.labels_to_class_names[label]
         key = hashlib.sha256(encoded).hexdigest()
 

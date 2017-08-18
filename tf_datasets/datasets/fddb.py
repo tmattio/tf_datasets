@@ -92,7 +92,7 @@ class fddb(BaseDataset):
     def convert(self):
         data_points = list(self._get_data_points())
         splits = split_dataset(data_points, split_factor=[
-                               0.8, 0.2], shuffle=True)
+                               0.9, 0.1], shuffle=True)
         split_names = ['train', 'validation']
 
         for split, split_name in zip(splits, split_names):

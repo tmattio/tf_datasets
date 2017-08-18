@@ -55,12 +55,8 @@ class svhn(BaseDataset):
         'test.tar.gz',
     ]
 
-    image_size = 64
-    image_channel = 3
     num_training = 73257
     num_validation = 26032
-    OUT_HEIGHT = 64
-    max_labels = 5
 
     class_names = [
         'zero',
@@ -97,8 +93,10 @@ class svhn(BaseDataset):
         for filename in self.filenames:
             output_path = os.path.join(self.download_dir, filename[:-7])
             if not os.path.exists(output_path):
-                extract_tgz(os.path.join(self.download_dir,
-                                         filename), self.download_dir)
+                extract_tgz(
+                    os.path.join(self.download_dir, filename),
+                    self.download_dir
+                )
 
     def convert(self):
         splits = self._get_data_points()
@@ -125,7 +123,7 @@ class svhn(BaseDataset):
             self.download_dir, 'test', 'digitStruct.mat')
         eval_points = read_digit_struct(eval_filepath)
 
-        train_points, eval_points
+        return train_points, eval_points
 
     def _convert_to_example(self, data_point):
         filename = data_point['name']
@@ -137,14 +135,15 @@ class svhn(BaseDataset):
         height, width, channels = decoded_image.shape
         key = hashlib.sha256(encoded_image).hexdigest()
 
-        xmin = data_point['left']
-        ymin = data_point['top']
-        xmax = [data_point['left'][i] + data_point['width'][i]
-                for i in len(data_point['left'])]
-        ymax = [data_point['top'][i] + data_point['height'][i]
-                for i in len(data_point['left'])]
-        classes = data_point['label']
-        classes_text = [self.labels_to_class_names[cl] for cl in classes]
+        xmin = [p / width for p in data_point['left']]
+        ymin = [p / height for p in data_point['top']]
+        xmax = [(data_point['left'][i] + data_point['width'][i]) / width
+                for i in range(len(data_point['left']))]
+        ymax = [(data_point['top'][i] + data_point['height'][i]) / height
+                for i in range(len(data_point['left']))]
+        classes = [int(cl) for cl in data_point['label']]
+        classes_text = [self.labels_to_class_names[cl].encode('utf8')
+                        for cl in classes]
 
         return tf.train.Example(features=tf.train.Features(feature={
             'image/height': dataset_utils.int64_feature(height),

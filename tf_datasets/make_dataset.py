@@ -33,7 +33,7 @@ tf.app.flags.DEFINE_bool(
 
 tf.app.flags.DEFINE_bool(
     'cleanup',
-    True,
+    False,
     'If true, the dataset will be recreated even if it already exists.')
 
 

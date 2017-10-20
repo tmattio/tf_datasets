@@ -38,35 +38,35 @@ tf.app.flags.DEFINE_bool(
 
 
 def main(_):
-    if not FLAGS.dataset_name:
-        raise ValueError(
-            'You must supply the dataset name with --dataset_name')
+  if not FLAGS.dataset_name:
+    raise ValueError(
+        'You must supply the dataset name with --dataset_name')
 
-    if not FLAGS.dataset_dir:
-        raise ValueError('You must supply the dataset name with --dataset_dir')
+  if not FLAGS.dataset_dir:
+    raise ValueError('You must supply the dataset name with --dataset_dir')
 
-    dataset = tfd.get_dataset(FLAGS.dataset_name, FLAGS.dataset_dir)
+  dataset = tfd.get_dataset(FLAGS.dataset_name, FLAGS.dataset_dir)
 
-    print('Downloading the files...')
-    dataset.download()
-    print('Extracting the files...')
-    dataset.extract()
-    print('Converting to tfrecords...')
-    dataset.convert()
-    if FLAGS.cleanup:
-        print('Cleaning up temporary files...')
-        dataset.cleanup()
+  print('Downloading the files...')
+  dataset.download()
+  print('Extracting the files...')
+  dataset.extract()
+  print('Converting to tfrecords...')
+  dataset.convert()
+  if FLAGS.cleanup:
+    print('Cleaning up temporary files...')
+    dataset.cleanup()
 
-    print('\nThe dataset has been generated!')
+  print('\nThe dataset has been generated!')
 
 
 def run(argv=None):
-    """Runs the program with an optional 'main' function and 'argv' list."""
-    f = flags.FLAGS
-    args = argv[1:] if argv else None
-    flags_passthrough = f._parse_flags(args=args)
-    sys.exit(main(sys.argv[:1] + flags_passthrough))
+  """Runs the program with an optional 'main' function and 'argv' list."""
+  f = flags.FLAGS
+  args = argv[1:] if argv else None
+  flags_passthrough = f._parse_flags(args=args)
+  sys.exit(main(sys.argv[:1] + flags_passthrough))
 
 
 if __name__ == '__main__':
-    run()
+  run()

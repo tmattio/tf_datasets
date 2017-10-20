@@ -1,0 +1,41 @@
+syntax = "proto2";
+
+package tf_datasets.protos;
+
+import "tf_datasets/protos/public_file.proto";
+
+message DatasetConfig {
+  // The name of the dataset.
+  required string name = 1;
+
+  // A list of public files to download and extract before creating the dataset.
+  repeated PublicFile public_files = 2;
+
+  // The list of the class names of the dataset. This will not be sorted.
+  repeated string class_names = 3;
+
+  // Wether the classes are zero-based or one-based.
+  optional bool zero_based_labels = 4 [default = true];
+
+  // The directory where the raw data will be downloaded and extracted.
+  // This can be an absolute path or relative (this will be relative to the dataset root directory).
+  optional string download_dir = 5 [default = './download/'];
+
+  message Split {
+    optional string name = 1;
+    optional float ratio = 2;
+    optional int32 data_point_num = 3;
+    optional int32 num_shards = 4 [default = 1];
+    optional int32 num_threads = 5 [default = 1];
+  }
+
+  // The list of the splits for this dataset.
+  // If the ratio is used, the sum of the ratios must equal 1.
+  // If the data_point_num is used, the sum of the data_points must equal the total data points given by _get_data_points().
+  repeated Split splits = 6;
+
+  // If the splits are custom, the Dataset base class will not split the data points.
+  // In this case, the _get_data_points() method must return the list of the
+  // dataset already splitted.
+  optional bool custom_splits = 7 [default = false];
+}

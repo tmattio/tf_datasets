@@ -1,125 +1,233 @@
+# -*- coding: utf-8 -*-
 import os
+import shutil
 from abc import ABCMeta, abstractmethod
+from google.protobuf import text_format
 
-from tf_datasets.core.dataset_utils import write_label_file
+from ..protos import dataset_config_pb2
+from ..protos import public_file_pb2
 
+from .dataset_utils import split_dataset
+from .dataset_utils import create_dataset_split
+from .dataset_utils import write_label_file
 
-class cached_property(object):
-    """A property that is only computed once per instance and then replaces
-    itself with an ordinary attribute. Deleting the attribute resets the
-    property.
+from .download_utils import download_http
+from .download_utils import download_google_drive
+from .download_utils import download_ftp
+from .download_utils import extract_tgz
+from .download_utils import extract_zip
+from .download_utils import extract_gzip
 
-    Source: https://github.com/bottlepy/bottle/commit/fa7733e075da0d790d809aa3d2f53071897e6f76
-    """
+_download_protocol_to_function_map = {
+    public_file_pb2.PublicFile.HTTP: download_http,
+    public_file_pb2.PublicFile.FTP: download_ftp,
+    public_file_pb2.PublicFile.GOOGLE_DRIVE: download_google_drive,
+    public_file_pb2.PublicFile.SSH: None,
+}
 
-    def __init__(self, func):
-        self.__doc__ = getattr(func, '__doc__')
-        self.func = func
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return self
-        value = obj.__dict__[self.func.__name__] = self.func(obj)
-        return value
+_archive_type_to_function_map = {
+    public_file_pb2.PublicFile.ArchiveInfo.AUTO: extract_tgz,
+    public_file_pb2.PublicFile.ArchiveInfo.GZIP: extract_gzip,
+    public_file_pb2.PublicFile.ArchiveInfo.ZIP: extract_zip,
+}
 
 
 class BaseDataset(metaclass=ABCMeta):
+  """TODO (tmattio): Complete docstring
+  """
 
-    def __init__(self, dataset_dir, class_names, zero_based_labels=False):
-        try:
-            os.makedirs(dataset_dir)
-        except FileExistsError:
-            pass
+  def __init__(self, dataset_dir, config_filepath):
+    """TODO (tmattio): Complete docstring
+    """
+    if not os.path.exists(config_filepath):
+      raise FileNotFoundError(
+          "The configuration file for the MNIST dataset does not exist."
+      )
 
-        self.dataset_dir = dataset_dir
-        self._class_names = class_names
-        self.zero_based_labels = zero_based_labels
+    self.dataset_dir = dataset_dir
 
-    @cached_property
-    def class_names(self):
-        """Get the list of the classes in the dataset.
+    with open(config_filepath, 'r') as f:
+      config_proto_text = f.read()
 
-        Returns:
-          A list or tuple of the classes names of this dataset.
-        """
-        return list(self._class_names)
+    self.config = dataset_config_pb2.DatasetConfig()
+    text_format.Merge(config_proto_text, self.config)
 
-    @cached_property
-    def num_classes(self):
-        """Get the total number of classes in this dataset.
+    # If the download path is relative in the configuration,
+    # make it relative to the directory root directory
+    if not os.path.isabs(self.config.download_dir):
+      self.config.download_dir = os.path.join(
+          self.dataset_dir, self.config.download_dir)
 
-        Returns:
-          An int of the number of classes
-        """
-        return len(self.class_names)
+    try:
+      os.makedirs(dataset_dir)
+    except FileExistsError:
+      pass
 
-    @cached_property
-    def class_names_to_labels(self):
-        """Build an association of the dataset classes to their ID.
+  @property
+  def class_names(self):
+    """Get the list of the classes in the dataset.
 
-        Returns:
-          A dictionnary of the classes names mapped to the labels.
-        """
-        if self.zero_based_labels:
-            return dict(zip(self.class_names, range(self.num_classes)))
-        else:
-            return dict(zip(self.class_names, range(1, self.num_classes + 1)))
+    Returns:
+      A list or tuple of the classes names of this dataset.
+    """
+    return self.config.class_names
 
-    @cached_property
-    def labels_to_class_names(self):
-        """Build an association of the dataset labels to their names.
+  @class_names.setter
+  def set_class_names(self, class_names):
+    """Sets the list of the classes in the dataset.
+    """
+    self.config.class_names = class_names
 
-        Returns:
-          A dictionnary of the labels mapped to the classes names.
-        """
-        if self.zero_based_labels:
-            return dict(zip(range(self.num_classes), self.class_names))
-        else:
-            return dict(zip(range(1, self.num_classes + 1), self.class_names))
+  @property
+  def num_classes(self):
+    """Get the total number of classes in this dataset.
 
-    def write_label_file(self):
-        write_label_file(self.labels_to_class_names, self.dataset_dir)
+    Returns:
+      An int of the number of classes
+    """
+    return len(self.class_names)
 
-    @abstractmethod
-    def download(self):
-        pass
+  @property
+  def class_names_to_labels(self):
+    """Build an association of the dataset classes to their ID.
 
-    @abstractmethod
-    def extract(self):
-        pass
+    Returns:
+      A dictionnary of the classes names mapped to the labels.
+    """
+    if self.config.zero_based_labels:
+      return dict(zip(self.class_names, range(self.num_classes)))
+    else:
+      return dict(zip(self.class_names, range(1, self.num_classes + 1)))
 
-    @abstractmethod
-    def convert(self):
-        """Convert the data points from the source format to TF-Records files.
+  @property
+  def labels_to_class_names(self):
+    """Build an association of the dataset labels to their names.
 
-        If the dataset already exist, this will not generate new tfrecord files.
+    Returns:
+      A dictionnary of the labels mapped to the classes names.
+    """
+    if self.config.zero_based_labels:
+      return dict(zip(range(self.num_classes), self.class_names))
+    else:
+      return dict(zip(range(1, self.num_classes + 1), self.class_names))
 
-        This will split the datasets from the data source into a training set and a
-        validation set. This will then convert the two set separately.
+  def download(self, force=False):
+    """TODO (tmattio): Complete docstring
+    """
+    try:
+      os.makedirs(self.config.download_dir)
+    except FileExistsError:
+      pass
 
-        This will also generate a label file containing all the classes names and labels
-        of this dataset.
+    for public_file in self.config.public_files:
+      output_path = os.path.join(
+          self.config.download_dir, public_file.filename)
+      if force or not os.path.exists(output_path):
+        download_func = _download_protocol_to_function_map[
+            public_file.protocol]
+        download_func(
+            public_file.uri,
+            output_path,
+            public_file.username,
+            public_file.password
+        )
 
-        The generated tfrecords and the labels file can be found in `self.dataset_dir`.
-        """
-        pass
+  def extract(self, force=False):
+    """TODO (tmattio): Complete docstring
+    """
+    for public_file in self.config.public_files:
+      if not public_file.is_archive:
+        continue
 
-    @abstractmethod
-    def cleanup(self):
-        pass
+      output_path = os.path.join(
+          self.config.download_dir,
+          public_file.archive_info.extracted_filename
+      )
+      if not os.path.exists(output_path):
+        extract_func = _archive_type_to_function_map[
+            public_file.archive_info.type]
+        archive_path = os.path.join(
+            self.config.download_dir, public_file.filename)
+        extract_func(
+            archive_path,
+            self.config.download_dir
+        )
 
-    @abstractmethod
-    def load(self, split_name, reader=None):
-        """Gets a dataset tuple with instructions for reading the data points.
+  def cleanup(self):
+    """TODO (tmattio): Complete docstring
+    """
+    shutil.rmtree(self.config.download_dir)
 
-        Args:
-            split_name: A train/test split name.
-            reader: The TensorFlow reader type.
+  def convert(self):
+    """Convert the data points from the source format to TF-Records files.
 
-        Returns:
-            A `Dataset` namedtuple.
+    If the dataset already exist, this will not generate new tfrecord files.
 
-        Raises:
-            ValueError: if `split_name` is not a valid train/test split.
-        """
-        pass
+    This will split the datasets from the data source into a training set and a
+    validation set. This will then convert the two set separately.
+
+    This will also generate a label file containing all the classes names and
+    labels of this dataset.
+
+    The generated tfrecords and the labels file can be found in
+    `self.dataset_dir`.
+    """
+    if self.config.custom_splits:
+      splits = self._get_data_points(self.config.download_dir)
+
+      if len(splits) != len(self.config.splits):
+        raise ValueError(
+            "The number of splits given is not the same as the config file.")
+
+      split_num = map(lambda s: s.data_point_num, self.config.splits)
+      if sum(map(len, splits)) != sum(split_num):
+        raise ValueError(
+            "The number of total data point is not the same as the config file.")
+    else:
+      split_ratios = map(lambda s: s.ratios, self.config.splits)
+      if sum(split_ratios) != 1.0:
+        raise ValueError("The sum of the ratios does not equal 1.")
+
+      data_points = self._get_data_points(self.config.download_dir)
+      splits = split_dataset(data_points, split_ratios)
+
+    for split, split_config in zip(splits, self.config.splits):
+      create_dataset_split(
+          self.config.name,
+          self.dataset_dir,
+          split_config.name,
+          split,
+          self._data_point_to_example,
+          split_config.num_shards,
+          split_config.num_threads
+      )
+
+    write_label_file(self.labels_to_class_names, self.dataset_dir)
+
+  @abstractmethod
+  def load(self, split_name, reader=None):
+    """Gets a dataset tuple with instructions for reading the data points.
+
+    Args:
+      split_name: A train/test split name.
+      reader: The TensorFlow reader type.
+
+    Returns:
+      A `Dataset` namedtuple.
+
+    Raises:
+      ValueError: if `split_name` is not a valid train/test split.
+    """
+    pass
+
+  @abstractmethod
+  def _get_data_points(self, download_dir):
+    """TODO (tmattio): Complete docstring
+    """
+    pass
+
+  @abstractmethod
+  def _data_point_to_example(self, data_point):
+    """TODO (tmattio): Complete docstring
+    """
+    pass

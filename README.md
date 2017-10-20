@@ -55,6 +55,7 @@ To use a dataset:
 * Add unit tests
 * Add loads method for the datasets
 * Create API to download already created dataset
+* Support Caltech Pedestrian dataset
 * Support MSCoco dataset
 * Support Pascal VOC 2007/2012 dataset
 * Support CBSR-Webface dataset

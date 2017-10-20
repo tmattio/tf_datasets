@@ -1,0 +1,51 @@
+syntax = "proto2";
+
+package tf_datasets.protos;
+
+message PublicFile {
+  // The URI of the file.
+  // If the protocol is HTTP, this is the URL of the file.
+  // If the protocol is FTP or SSH, this is the filepath of the file.
+  // If the protocol is GOOGLE_DRIVE, this is the ID of the file.
+  required string uri = 1;
+
+  required string filename = 2;
+
+  enum Protocol {
+    HTTP = 0;
+    FTP = 1;
+    SSH = 2;
+    GOOGLE_DRIVE = 3;
+  }
+
+  // The protocol to use to download the file.
+  required Protocol protocol = 3;
+
+  // Optional username if there is an authentification with the server.
+  optional string username = 4;
+
+  // Optional password if there is an authentification with the server.
+  optional string password = 5;
+
+  // The size of the file in bytes.
+  optional int32 file_size = 6;
+
+  // A checksum of the file. This will ensure the file is not corrupted if not null.
+  optional string checksum = 7;
+
+  message ArchiveInfo {
+    enum ArchiveType {
+      AUTO = 0;
+      GZIP = 1;
+      ZIP = 2;
+      TGZ = 3;
+    }
+
+    optional ArchiveType type = 1 [default = AUTO];
+    optional string extracted_filename = 2;
+    optional int32 extracted_filesize = 3;
+  }
+
+  optional bool is_archive = 8 [default = true];
+  optional ArchiveInfo archive_info = 9;
+}
